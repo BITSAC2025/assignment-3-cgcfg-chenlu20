@@ -1,6 +1,8 @@
 /**
  * ICFG.cpp
- * @author kisslune 
+ * Assignment 3 - ICFG Path Analysis
+ * Name: 胡晨璐
+ * Student ID: 3220252746
  */
 
 #include "CFGA.h"
