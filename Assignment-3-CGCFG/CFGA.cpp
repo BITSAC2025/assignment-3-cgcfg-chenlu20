@@ -129,11 +129,9 @@ void CFGAnalysis::analyze(SVF::ICFG *icfg)
     dfs = [&](unsigned current, unsigned sink, 
               std::vector<unsigned> &path, std::set<unsigned> &visited) -> void
     {
-        // 加入当前节点到路径
         path.push_back(current);
         visited.insert(current);
         
-        // 到达目标节点，记录路径
         if (current == sink)
         {
             recordPath(path);
@@ -143,6 +141,12 @@ void CFGAnalysis::analyze(SVF::ICFG *icfg)
         }
         
         auto node = icfg->getICFGNode(current);
+        
+        // 如果是调用节点，压栈
+        if (llvm::isa<SVF::CallICFGNode>(node))
+        {
+            callStack.push(current);
+        }
         
         // 遍历所有出边
         for (auto edge : node->getOutEdges())
@@ -154,18 +158,23 @@ void CFGAnalysis::analyze(SVF::ICFG *icfg)
             }
         }
         
-        // 回溯
+        // 如果之前压栈了，现在弹栈
+        if (llvm::isa<SVF::CallICFGNode>(node) && !callStack.empty())
+        {
+            callStack.pop();
+        }
+        
         path.pop_back();
         visited.erase(current);
     };
     
-    // 对每对source-sink执行DFS
     for (auto src : sources)
     {
         for (auto snk : sinks)
         {
             std::vector<unsigned> path;
             std::set<unsigned> visited;
+            callStack = std::stack<unsigned>();
             dfs(src, snk, path, visited);
         }
     }
